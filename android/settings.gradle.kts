@@ -17,5 +17,6 @@ dependencyResolutionManagement {
 rootProject.name = "haulio-android"
 
 include(":app")
-include(":shared")
-project(":shared").projectDir = File(settingsDir, "../shared")
+// TODO: Re-enable when KMM shared module integration is wired
+// include(":shared")
+// project(":shared").projectDir = File(settingsDir, "../shared")
