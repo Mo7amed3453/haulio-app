@@ -6,6 +6,7 @@ import SwiftUI
 final class AppCoordinator {
     let container: DependencyContainer
     let mapViewModel: MapViewModel
+    let navigationViewModel: NavigationViewModel
 
     init() {
         let container = DependencyContainer()
@@ -13,6 +14,11 @@ final class AppCoordinator {
         self.mapViewModel = MapViewModel(
             locationService: container.locationService,
             styleProvider: container.mapStyleProvider
+        )
+        self.navigationViewModel = NavigationViewModel(
+            navigationManager: container.navigationManager,
+            routeTracker: container.routeTracker,
+            etaCalculator: container.etaCalculator
         )
     }
 }

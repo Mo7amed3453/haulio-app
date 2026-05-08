@@ -25,6 +25,13 @@
 		A1B2C3D400000031 /* MapViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000021 /* MapViewModelTests.swift */; };
 		A1B2C3D400000039 /* MapLibre in Frameworks (App) */ = {isa = PBXBuildFile; productRef = A1B2C3D400000038 /* MapLibre */; };
 		A1B2C3D40000003A /* MapLibre in Frameworks (Tests) */ = {isa = PBXBuildFile; productRef = A1B2C3D40000004A /* MapLibre */; };
+		A1B2C3D400000052 /* NavigationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40000004B /* NavigationView.swift */; };
+		A1B2C3D400000053 /* NavigationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40000004C /* NavigationViewModel.swift */; };
+		A1B2C3D400000054 /* ExitGuideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40000004D /* ExitGuideView.swift */; };
+		A1B2C3D400000055 /* RouteDeviationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40000004E /* RouteDeviationView.swift */; };
+		A1B2C3D400000056 /* TurnBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40000004F /* TurnBannerView.swift */; };
+		A1B2C3D400000057 /* VoiceInstructionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000050 /* VoiceInstructionService.swift */; };
+		A1B2C3D400000058 /* NavigationBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000051 /* NavigationBridge.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +64,13 @@
 		A1B2C3D40000001F /* TileConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TileConfigurationTests.swift; sourceTree = "<group>"; };
 		A1B2C3D400000020 /* LocationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationServiceTests.swift; sourceTree = "<group>"; };
 		A1B2C3D400000021 /* MapViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewModelTests.swift; sourceTree = "<group>"; };
+		A1B2C3D40000004B /* NavigationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationView.swift; sourceTree = "<group>"; };
+		A1B2C3D40000004C /* NavigationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationViewModel.swift; sourceTree = "<group>"; };
+		A1B2C3D40000004D /* ExitGuideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExitGuideView.swift; sourceTree = "<group>"; };
+		A1B2C3D40000004E /* RouteDeviationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteDeviationView.swift; sourceTree = "<group>"; };
+		A1B2C3D40000004F /* TurnBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TurnBannerView.swift; sourceTree = "<group>"; };
+		A1B2C3D400000050 /* VoiceInstructionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceInstructionService.swift; sourceTree = "<group>"; };
+		A1B2C3D400000051 /* NavigationBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationBridge.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -132,6 +146,7 @@
 			children = (
 				A1B2C3D40000003E /* Map */,
 				A1B2C3D40000003F /* Search */,
+				A1B2C3D400000059 /* Navigation */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -154,11 +169,24 @@
 			path = Search;
 			sourceTree = "<group>";
 		};
+		A1B2C3D400000059 /* Navigation */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D40000004B /* NavigationView.swift */,
+				A1B2C3D40000004C /* NavigationViewModel.swift */,
+				A1B2C3D40000004D /* ExitGuideView.swift */,
+				A1B2C3D40000004E /* RouteDeviationView.swift */,
+				A1B2C3D40000004F /* TurnBannerView.swift */,
+			);
+			path = Navigation;
+			sourceTree = "<group>";
+		};
 		A1B2C3D400000040 /* Services */ = {
 			isa = PBXGroup;
 			children = (
 				A1B2C3D400000041 /* Location */,
 				A1B2C3D400000042 /* Map */,
+				A1B2C3D40000005A /* Navigation */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -178,6 +206,15 @@
 				A1B2C3D40000001B /* TileConfiguration.swift */,
 			);
 			path = Map;
+			sourceTree = "<group>";
+		};
+		A1B2C3D40000005A /* Navigation */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D400000050 /* VoiceInstructionService.swift */,
+				A1B2C3D400000051 /* NavigationBridge.swift */,
+			);
+			path = Navigation;
 			sourceTree = "<group>";
 		};
 		A1B2C3D400000043 /* Resources */ = {
@@ -320,6 +357,13 @@
 				A1B2C3D40000002A /* LocationService.swift in Sources */,
 				A1B2C3D40000002B /* MapStyleProvider.swift in Sources */,
 				A1B2C3D40000002C /* TileConfiguration.swift in Sources */,
+				A1B2C3D400000052 /* NavigationView.swift in Sources */,
+				A1B2C3D400000053 /* NavigationViewModel.swift in Sources */,
+				A1B2C3D400000054 /* ExitGuideView.swift in Sources */,
+				A1B2C3D400000055 /* RouteDeviationView.swift in Sources */,
+				A1B2C3D400000056 /* TurnBannerView.swift in Sources */,
+				A1B2C3D400000057 /* VoiceInstructionService.swift in Sources */,
+				A1B2C3D400000058 /* NavigationBridge.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
