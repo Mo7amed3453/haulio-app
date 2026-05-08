@@ -8,6 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,10 +24,11 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Debug - show settings
+        run: cat settings.gradle.kts
+
       - name: Assemble Debug
-        working-directory: android
-        run: gradle :app:assembleDebug
+        run: gradle --no-search-upward :app:assembleDebug
 
       - name: Unit Tests
-        working-directory: android
-        run: gradle :app:testDebugUnitTest
+        run: gradle --no-search-upward :app:testDebugUnitTest
