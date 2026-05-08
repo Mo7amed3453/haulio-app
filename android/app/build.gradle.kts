@@ -83,6 +83,29 @@ dependencies {
 
     implementation("com.google.android.gms:play-services-location:21.3.0")
 
+    // ML Kit Barcode Scanning (on-device, free)
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
+
+    // CameraX
+    val cameraxVersion = "1.4.0"
+    implementation("androidx.camera:camera-camera2:$cameraxVersion")
+    implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
+    implementation("androidx.camera:camera-view:$cameraxVersion")
+
+    // Accompanist Permissions (runtime permission helper for Compose)
+    implementation("com.google.accompanist:accompanist-permissions:0.36.0")
+
+    // Coil (async image loading — proof-of-delivery photo display)
+    implementation("io.coil-kt:coil-compose:2.7.0")
+
+    // Supabase Kotlin (postgrest + gotrue)
+    val supabaseVersion = "2.6.0"
+    implementation(platform("io.github.jan-tennert.supabase:bom:$supabaseVersion"))
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    implementation("io.github.jan-tennert.supabase:gotrue-kt")
+    // Ktor engine required by Supabase SDK
+    implementation("io.ktor:ktor-client-android:2.3.12")
+
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
     testImplementation("app.cash.turbine:turbine:1.1.0")
