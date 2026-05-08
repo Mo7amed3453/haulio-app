@@ -3,7 +3,6 @@ package app.haulio.android.features.search
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.weight
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -22,7 +21,7 @@ fun SearchBar(
     val query = remember { mutableStateOf("") }
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(dp(8))
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         OutlinedTextField(
             modifier = Modifier.weight(1f),
