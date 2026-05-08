@@ -15,15 +15,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.TurnLeft
-import androidx.compose.material.icons.automirrored.filled.TurnRight
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.TrendingFlat
 import androidx.compose.material.icons.filled.Flag
-import androidx.compose.material.icons.filled.Merge
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.RampRight
-import androidx.compose.material.icons.filled.UTurnLeft
-import androidx.compose.material.icons.filled.UTurnRight
+import androidx.compose.material.icons.filled.Redo
+import androidx.compose.material.icons.filled.Undo
+import androidx.compose.material.icons.filled.CallMerge
+import androidx.compose.material.icons.filled.CallMade
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -146,18 +146,18 @@ private fun formatDistance(miles: Double): String = when {
 
 private fun ManeuverType.toIcon(): ImageVector = when (this) {
     ManeuverType.LEFT, ManeuverType.SHARP_LEFT, ManeuverType.SLIGHT_LEFT ->
-        Icons.AutoMirrored.Filled.TurnLeft
+        Icons.AutoMirrored.Filled.ArrowBack
     ManeuverType.RIGHT, ManeuverType.SHARP_RIGHT, ManeuverType.SLIGHT_RIGHT ->
-        Icons.AutoMirrored.Filled.TurnRight
+        Icons.AutoMirrored.Filled.ArrowForward
     ManeuverType.UTURN_LEFT ->
-        Icons.Filled.UTurnLeft
+        Icons.Filled.Undo
     ManeuverType.UTURN_RIGHT ->
-        Icons.Filled.UTurnRight
+        Icons.Filled.Redo
     ManeuverType.MERGE ->
-        Icons.Filled.Merge
+        Icons.Filled.CallMerge
     ManeuverType.RAMP_RIGHT, ManeuverType.RAMP_LEFT, ManeuverType.RAMP_STRAIGHT,
     ManeuverType.EXIT_RIGHT, ManeuverType.EXIT_LEFT ->
-        Icons.Filled.RampRight
+        Icons.Filled.CallMade
     ManeuverType.ROUNDABOUT_ENTER, ManeuverType.ROUNDABOUT_EXIT ->
         Icons.Filled.PlayArrow
     ManeuverType.DESTINATION ->
