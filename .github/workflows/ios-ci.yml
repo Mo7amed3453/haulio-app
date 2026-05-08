@@ -13,17 +13,22 @@ concurrency:
 jobs:
   build-and-test:
     name: Build & Test
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select Xcode 16
-        run: sudo xcode-select -s /Applications/Xcode_16.0.app/Contents/Developer
+      - name: Select Xcode
+        run: |
+          XCODE_PATH=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -1 || echo "/Applications/Xcode.app")
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
 
       - name: Show Xcode Version
         run: xcodebuild -version
+
+      - name: List Simulators
+        run: xcrun simctl list devices available | grep -i iphone | tail -5
 
       - name: Resolve SPM Dependencies
         run: |
@@ -36,7 +41,7 @@ jobs:
           xcodebuild build \
             -project Haulio.xcodeproj \
             -scheme Haulio \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.0' \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.1' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO
 
@@ -45,7 +50,7 @@ jobs:
           xcodebuild test \
             -project Haulio.xcodeproj \
             -scheme Haulio \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.0' \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.1' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath TestResults.xcresult

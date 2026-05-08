@@ -17,13 +17,14 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-          cache: gradle
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
       - name: Assemble Debug
-        run: ./android/gradlew -p android :app:assembleDebug
+        working-directory: android
+        run: gradle :app:assembleDebug
 
       - name: Unit Tests
-        run: ./android/gradlew -p android :app:testDebugUnitTest
+        working-directory: android
+        run: gradle :app:testDebugUnitTest
