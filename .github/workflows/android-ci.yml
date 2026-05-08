@@ -23,8 +23,8 @@ jobs:
 
       - name: Assemble Debug
         working-directory: android
-        run: gradle :app:assembleDebug
+        run: gradle -c settings.gradle.kts :app:assembleDebug
 
       - name: Unit Tests
         working-directory: android
-        run: gradle :app:testDebugUnitTest
+        run: gradle -c settings.gradle.kts :app:testDebugUnitTest
