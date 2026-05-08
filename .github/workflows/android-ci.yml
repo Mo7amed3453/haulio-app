@@ -27,7 +27,7 @@ jobs:
           gradle-version: "8.7"
 
       - name: Assemble Debug
-        run: gradle :app:assembleDebug
+        run: gradle :app:assembleDebug --info 2>&1 | tail -200
 
       - name: Unit Tests
-        run: gradle :app:testDebugUnitTest
+        run: gradle :app:testDebugUnitTest --info 2>&1 | tail -100
