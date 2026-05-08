@@ -47,10 +47,11 @@ import org.maplibre.android.maps.Style
 import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.PropertyFactory
 import org.maplibre.android.style.sources.GeoJsonSource
-import com.mapbox.geojson.Feature
-import com.mapbox.geojson.FeatureCollection
-import com.mapbox.geojson.LineString
-import com.mapbox.geojson.Point
+import app.haulio.shared.navigation.models.NavigationStep
+import org.maplibre.geojson.Feature
+import org.maplibre.geojson.FeatureCollection
+import org.maplibre.geojson.LineString
+import org.maplibre.geojson.Point
 import kotlin.time.Duration
 
 private const val ROUTE_SOURCE_ID = "navigation-route-source"
@@ -123,7 +124,7 @@ fun NavigationScreen(
                                 style.addSource(GeoJsonSource(ROUTE_SOURCE_ID))
                                 style.addLayer(
                                     LineLayer(ROUTE_LAYER_ID, ROUTE_SOURCE_ID).apply {
-                                        withProperties(
+                                        setProperties(
                                             PropertyFactory.lineColor("#4D90FE"),
                                             PropertyFactory.lineWidth(5f),
                                             PropertyFactory.lineCap("round"),
@@ -142,7 +143,7 @@ fun NavigationScreen(
                         val points = uiState.routePoints.map { Point.fromLngLat(it.longitude, it.latitude) }
                         val line = LineString.fromLngLats(points)
                         source?.setGeoJson(
-                            FeatureCollection.fromFeature(Feature.fromGeometry(line))
+                            FeatureCollection.fromFeatures(listOf(Feature.fromGeometry(line)))
                         )
                     }
 
