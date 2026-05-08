@@ -4,7 +4,10 @@ import android.location.Location
 import app.haulio.android.services.location.toLocationPoint
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 class LocationServiceTest {
     @Test
     fun `maps android location to location point`() {
