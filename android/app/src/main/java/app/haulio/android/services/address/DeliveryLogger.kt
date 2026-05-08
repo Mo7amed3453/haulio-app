@@ -58,36 +58,40 @@ class DeliveryLogger(
         coordinates: GeoPoint,
         unit: String?,
         photoUri: String?,
-    ) = withContext(Dispatchers.IO) {
-        val row = DeliveryRow(
-            deliveryId  = java.util.UUID.randomUUID().toString(),
-            address     = address,
-            lat         = coordinates.lat,
-            lon         = coordinates.lon,
-            unitNumber  = unit,
-            photoUrl    = photoUri,
-            driverId    = driverId,
-            timestampMs = System.currentTimeMillis(),
-        )
-        // TODO: supabase.from("deliveries").insert(row)
-        android.util.Log.d("DeliveryLogger", "logDelivery: $row")
+    ) {
+        withContext(Dispatchers.IO) {
+            val row = DeliveryRow(
+                deliveryId  = java.util.UUID.randomUUID().toString(),
+                address     = address,
+                lat         = coordinates.lat,
+                lon         = coordinates.lon,
+                unitNumber  = unit,
+                photoUrl    = photoUri,
+                driverId    = driverId,
+                timestampMs = System.currentTimeMillis(),
+            )
+            // TODO: supabase.from("deliveries").insert(row)
+            android.util.Log.d("DeliveryLogger", "logDelivery: $row")
+        }
     }
 
     override suspend fun logCorrection(
         original: String,
         corrected: String,
         coordinates: GeoPoint,
-    ) = withContext(Dispatchers.IO) {
-        val row = CorrectionRow(
-            originalInput    = original,
-            correctedAddress = corrected,
-            lat              = coordinates.lat,
-            lon              = coordinates.lon,
-            driverId         = driverId,
-            timestampMs      = System.currentTimeMillis(),
-        )
-        // TODO: supabase.from("address_corrections").insert(row)
-        android.util.Log.d("DeliveryLogger", "logCorrection: $row")
+    ) {
+        withContext(Dispatchers.IO) {
+            val row = CorrectionRow(
+                originalInput    = original,
+                correctedAddress = corrected,
+                lat              = coordinates.lat,
+                lon              = coordinates.lon,
+                driverId         = driverId,
+                timestampMs      = System.currentTimeMillis(),
+            )
+            // TODO: supabase.from("address_corrections").insert(row)
+            android.util.Log.d("DeliveryLogger", "logCorrection: $row")
+        }
     }
 
     override suspend fun getCorrectionCount(coordinates: GeoPoint, radiusMeters: Double): Int =
