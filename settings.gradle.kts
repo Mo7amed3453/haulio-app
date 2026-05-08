@@ -19,5 +19,6 @@ dependencyResolutionManagement {
 include(":android:app")
 project(":android:app").projectDir = file("android/app")
 
-include(":shared")
-project(":shared").projectDir = file("shared")
+// TODO: Re-enable when shared module plugin versions are aligned
+// include(":shared")
+// project(":shared").projectDir = file("shared")
