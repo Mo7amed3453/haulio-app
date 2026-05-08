@@ -1,0 +1,57 @@
+{
+  "version": 8,
+  "name": "Haulio Dark",
+  "sources": {
+    "haulio-vector": {
+      "type": "vector",
+      "tiles": [
+        "https://tiles.haulio.app/{z}/{x}/{y}.pbf"
+      ],
+      "minzoom": 0,
+      "maxzoom": 14,
+      "attribution": "© OpenStreetMap contributors"
+    }
+  },
+  "glyphs": "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-color": "#1a1a2e"
+      }
+    },
+    {
+      "id": "water",
+      "type": "fill",
+      "source": "haulio-vector",
+      "source-layer": "water",
+      "paint": {
+        "fill-color": "#16213e"
+      }
+    },
+    {
+      "id": "road",
+      "type": "line",
+      "source": "haulio-vector",
+      "source-layer": "transportation",
+      "paint": {
+        "line-color": "#2d2d44",
+        "line-width": 1.0
+      }
+    },
+    {
+      "id": "label",
+      "type": "symbol",
+      "source": "haulio-vector",
+      "source-layer": "place",
+      "layout": {
+        "text-field": ["get", "name"],
+        "text-size": 12
+      },
+      "paint": {
+        "text-color": "#a0a0b0"
+      }
+    }
+  ]
+}

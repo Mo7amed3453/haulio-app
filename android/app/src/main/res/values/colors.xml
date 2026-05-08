@@ -1,0 +1,6 @@
+<resources>
+    <color name="haulio_bg">#1A1A2E</color>
+    <color name="haulio_surface">#16213E</color>
+    <color name="haulio_primary">#2D2D44</color>
+    <color name="haulio_text">#A0A0B0</color>
+</resources>
