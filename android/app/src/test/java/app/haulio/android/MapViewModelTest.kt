@@ -41,7 +41,7 @@ class MapViewModelTest {
         val viewModel = MapViewModel(ObserveLocationUseCase(repository))
 
         dispatcher.scheduler.advanceUntilIdle()
-        assertEquals(1.0, viewModel.uiState.value.userLocation?.latitude, 0.0)
-        assertEquals(2.0, viewModel.uiState.value.userLocation?.longitude, 0.0)
+        assertEquals(1.0, viewModel.uiState.value.userLocation!!.latitude, 0.0)
+        assertEquals(2.0, viewModel.uiState.value.userLocation!!.longitude, 0.0)
     }
 }
