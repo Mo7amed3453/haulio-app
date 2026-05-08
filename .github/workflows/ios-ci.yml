@@ -21,8 +21,8 @@ jobs:
 
       - name: Select Xcode
         run: |
-          XCODE_PATH=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -1 || echo "/Applications/Xcode.app")
-          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          ls /Applications/ | grep Xcode
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 
       - name: Show Xcode Version
         run: xcodebuild -version
@@ -41,7 +41,7 @@ jobs:
           xcodebuild build \
             -project Haulio.xcodeproj \
             -scheme Haulio \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.1' \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO
 
@@ -50,7 +50,7 @@ jobs:
           xcodebuild test \
             -project Haulio.xcodeproj \
             -scheme Haulio \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.1' \
+            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO \
             -resultBundlePath TestResults.xcresult
