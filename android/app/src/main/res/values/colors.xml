@@ -1,6 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="haulio_bg">#1A1A2E</color>
+    <color name="haulio_bg">#0a1628</color>
     <color name="haulio_surface">#16213E</color>
     <color name="haulio_primary">#2D2D44</color>
     <color name="haulio_text">#A0A0B0</color>
+    <color name="navy_dark">#0a1628</color>
+    <color name="electric_green">#00e676</color>
+    <color name="alert_gold">#FFD740</color>
 </resources>
