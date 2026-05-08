@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -44,7 +45,7 @@ data class TimedGeoPoint(
 private data class TraceRouteRequest(
     val shape: List<TracePoint>,
     val costing: String,
-    val shapeMatch: String,
+    @SerialName("shape_match") val shapeMatch: String,
 )
 
 @Serializable

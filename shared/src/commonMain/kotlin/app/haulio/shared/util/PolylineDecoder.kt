@@ -1,6 +1,7 @@
 package app.haulio.shared.util
 
 import app.haulio.shared.navigation.models.GeoPoint
+import kotlin.math.pow
 
 /**
  * Decodes Valhalla polyline strings (precision 6) into [GeoPoint]s.
@@ -14,7 +15,7 @@ object PolylineDecoder {
         var index = 0
         var lat = 0
         var lon = 0
-        val factor = Math.pow(10.0, precision.toDouble())
+        val factor = 10.0.pow(precision.toDouble())
 
         while (index < encoded.length) {
             val latChange = decodeValue(encoded, index)

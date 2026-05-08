@@ -19,8 +19,13 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.time.Duration
+import kotlin.math.PI
+import kotlin.math.atan2
+import kotlin.math.cos
 import kotlin.math.pow
+import kotlin.math.sin
+import kotlin.math.sqrt
+import kotlin.time.Duration
 import kotlinx.coroutines.delay
 
 /**
@@ -146,13 +151,13 @@ class NavigationManager(
 
     private fun distanceMiles(a: GeoPoint, b: GeoPoint): Double {
         val r = 3958.7613
-        val dLat = Math.toRadians(b.lat - a.lat)
-        val dLon = Math.toRadians(b.lon - a.lon)
-        val lat1 = Math.toRadians(a.lat)
-        val lat2 = Math.toRadians(b.lat)
-        val x = kotlin.math.sin(dLat / 2).pow(2) +
-            kotlin.math.sin(dLon / 2).pow(2) * kotlin.math.cos(lat1) * kotlin.math.cos(lat2)
-        val c = 2 * kotlin.math.atan2(kotlin.math.sqrt(x), kotlin.math.sqrt(1 - x))
+        val dLat = (b.lat - a.lat) * (PI / 180.0)
+        val dLon = (b.lon - a.lon) * (PI / 180.0)
+        val lat1 = a.lat * (PI / 180.0)
+        val lat2 = b.lat * (PI / 180.0)
+        val x = sin(dLat / 2).pow(2) +
+            sin(dLon / 2).pow(2) * cos(lat1) * cos(lat2)
+        val c = 2 * atan2(sqrt(x), sqrt(1 - x))
         return r * c
     }
 }

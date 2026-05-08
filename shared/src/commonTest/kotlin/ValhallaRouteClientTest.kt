@@ -10,6 +10,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -17,7 +18,7 @@ import kotlin.test.assertTrue
 
 class ValhallaRouteClientTest {
     @Test
-    suspend fun parsesRouteManeuvers() {
+    fun parsesRouteManeuvers() = runTest {
         val jsonPayload = """
             {
               "trip": {
