@@ -24,11 +24,8 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Debug - show settings
-        run: cat settings.gradle.kts
-
       - name: Assemble Debug
-        run: gradle --no-search-upward :app:assembleDebug
+        run: gradle :app:assembleDebug
 
       - name: Unit Tests
-        run: gradle --no-search-upward :app:testDebugUnitTest
+        run: gradle :app:testDebugUnitTest
