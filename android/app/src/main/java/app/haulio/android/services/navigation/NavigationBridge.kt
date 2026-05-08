@@ -66,42 +66,11 @@ enum class ExitService { GAS, FOOD, LODGING }
 enum class DeviationReason { ROAD_CLOSED, ACCIDENT, OTHER }
 
 // ---------------------------------------------------------------------------
-// KMM real-implementation adapter
+// KMM real-implementation adapter (placeholder — uncomment once KMM shared module is wired in)
 // ---------------------------------------------------------------------------
-
-/**
- * Wraps the real KMM [app.haulio.shared.navigation.NavigationManager] and
- * adapts its API to [INavigationManager].
- */
-class KmmNavigationManagerBridge(
-    private val delegate: app.haulio.shared.navigation.NavigationManager,
-) : INavigationManager {
-
-    override val state: StateFlow<NavigationState> = delegate.state
-
-    private val _routeDeviations = MutableSharedFlow<RouteDeviation>(extraBufferCapacity = 8)
-    override val routeDeviations: SharedFlow<RouteDeviation> = _routeDeviations.asSharedFlow()
-
-    private val _maneuverUpdates = MutableSharedFlow<NavigationStep>(extraBufferCapacity = 8)
-    override val maneuverUpdates: SharedFlow<NavigationStep> = _maneuverUpdates.asSharedFlow()
-
-    override val remainingEta: StateFlow<Duration> = delegate.remainingEta
-
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-
-    init {
-        scope.launch { delegate.routeDeviations.collect { _routeDeviations.emit(it) } }
-        scope.launch { delegate.maneuverUpdates.collect { _maneuverUpdates.emit(it) } }
-    }
-
-    override suspend fun startNavigation(origin: GeoPoint, target: GeoPoint) =
-        delegate.startNavigation(origin, target)
-
-    override suspend fun stopNavigation() = delegate.stopNavigation()
-
-    override suspend fun updateLocation(location: GeoPoint, timestampSec: Long) =
-        delegate.updateLocation(location, timestampSec)
-}
+// class KmmNavigationManagerBridge(
+//     private val delegate: app.haulio.shared.navigation.NavigationManager,
+// ) : INavigationManager { ... }
 
 // ---------------------------------------------------------------------------
 // Mock implementation — used for standalone Android development / preview
