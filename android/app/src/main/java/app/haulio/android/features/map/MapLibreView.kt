@@ -15,6 +15,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import app.haulio.android.features.crime.CrimeHeatmapLayer
 import app.haulio.android.features.fuel.FuelMapMarkersLayer
+import app.haulio.android.features.radar.RadarMapMarkersLayer
 import app.haulio.android.features.traffic.IncidentPinsLayer
 import app.haulio.android.features.traffic.TrafficOverlayLayer
 import app.haulio.android.services.fuel.FuelStation
@@ -23,6 +24,7 @@ import app.haulio.android.services.map.MapStyleProvider
 import app.haulio.android.services.map.TileConfiguration
 import app.haulio.android.services.traffic.TrafficEvent
 import app.haulio.shared.crime.models.CrimeGridCell
+import app.haulio.shared.radar.models.SpeedCamera
 import org.koin.java.KoinJavaComponent.getKoin
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
@@ -41,9 +43,12 @@ import org.maplibre.android.maps.Style
  * @param isFuelVisible        Whether the fuel station layer is shown.
  * @param crimeGrid            Crime heatmap grid cells to render.
  * @param isCrimeVisible       Whether the crime heatmap layer is shown.
+ * @param radarCameras         Speed cameras to render as map pins.
+ * @param isRadarVisible       Whether the radar camera layer is shown.
  * @param onMapLongClick       Called when the driver long-presses the map (lat, lon).
  * @param onIncidentTapped     Called with the incident ID when a pin is tapped.
  * @param onFuelStationTapped  Called with the station ID when a fuel pin is tapped.
+ * @param onRadarCameraTapped  Called with the camera ID when a radar pin is tapped.
  */
 @SuppressLint("MissingPermission")
 @Composable
@@ -56,9 +61,12 @@ fun MapLibreView(
     isFuelVisible: Boolean = false,
     crimeGrid: List<CrimeGridCell> = emptyList(),
     isCrimeVisible: Boolean = false,
+    radarCameras: List<SpeedCamera> = emptyList(),
+    isRadarVisible: Boolean = false,
     onMapLongClick: ((Double, Double) -> Unit)? = null,
     onIncidentTapped: ((String) -> Unit)? = null,
     onFuelStationTapped: ((String) -> Unit)? = null,
+    onRadarCameraTapped: ((String) -> Unit)? = null,
 ) {
     val context          = LocalContext.current
     val lifecycleOwner   = LocalLifecycleOwner.current
@@ -70,6 +78,7 @@ fun MapLibreView(
     val onLongClickRef      = remember { mutableStateOf(onMapLongClick) }
     val onIncidentRef       = remember { mutableStateOf(onIncidentTapped) }
     val onFuelStationRef    = remember { mutableStateOf(onFuelStationTapped) }
+    val onRadarCameraRef    = remember { mutableStateOf(onRadarCameraTapped) }
 
     // Latest data refs; seeded into the style immediately after it loads.
     val trafficEventsRef    = remember { mutableStateOf(trafficEvents) }
@@ -78,17 +87,22 @@ fun MapLibreView(
     val fuelVisibleRef      = remember { mutableStateOf(isFuelVisible) }
     val crimeGridRef        = remember { mutableStateOf(crimeGrid) }
     val crimeVisibleRef     = remember { mutableStateOf(isCrimeVisible) }
+    val radarCamerasRef     = remember { mutableStateOf(radarCameras) }
+    val radarVisibleRef     = remember { mutableStateOf(isRadarVisible) }
 
     SideEffect {
         onLongClickRef.value    = onMapLongClick
         onIncidentRef.value     = onIncidentTapped
         onFuelStationRef.value  = onFuelStationTapped
+        onRadarCameraRef.value  = onRadarCameraTapped
         trafficEventsRef.value  = trafficEvents
         trafficVisibleRef.value = isTrafficVisible
         fuelStationsRef.value   = fuelStations
         fuelVisibleRef.value    = isFuelVisible
         crimeGridRef.value      = crimeGrid
         crimeVisibleRef.value   = isCrimeVisible
+        radarCamerasRef.value   = radarCameras
+        radarVisibleRef.value   = isRadarVisible
     }
 
     // ── Lifecycle wiring ──────────────────────────────────────────────────
@@ -122,6 +136,7 @@ fun MapLibreView(
                 val screenPt   = projection.toScreenLocation(latLng)
                 val incidentId = IncidentPinsLayer.queryAtPoint(map, PointF(screenPt.x, screenPt.y))
                 val fuelId     = FuelMapMarkersLayer.queryAtPoint(map, PointF(screenPt.x, screenPt.y))
+                val radarId    = RadarMapMarkersLayer.queryAtPoint(map, PointF(screenPt.x, screenPt.y))
                 when {
                     incidentId != null -> {
                         onIncidentRef.value?.invoke(incidentId)
@@ -129,6 +144,10 @@ fun MapLibreView(
                     }
                     fuelId != null -> {
                         onFuelStationRef.value?.invoke(fuelId)
+                        true
+                    }
+                    radarId != null -> {
+                        onRadarCameraRef.value?.invoke(radarId)
                         true
                     }
                     else -> false
@@ -141,6 +160,7 @@ fun MapLibreView(
                 IncidentPinsLayer.update(style, trafficEventsRef.value)
                 FuelMapMarkersLayer.update(style, fuelStationsRef.value, fuelVisibleRef.value)
                 CrimeHeatmapLayer.update(style, crimeGridRef.value, crimeVisibleRef.value)
+                RadarMapMarkersLayer.update(style, radarCamerasRef.value, radarVisibleRef.value)
             }
         }
         onDispose { /* MapView lifecycle handled by the DisposableEffect above */ }
@@ -168,6 +188,7 @@ fun MapLibreView(
                     IncidentPinsLayer.update(style, trafficEvents)
                     FuelMapMarkersLayer.update(style, fuelStations, isFuelVisible)
                     CrimeHeatmapLayer.update(style, crimeGrid, isCrimeVisible)
+                    RadarMapMarkersLayer.update(style, radarCameras, isRadarVisible)
                 }
             }
         },
@@ -200,11 +221,12 @@ private fun configureMap(
         )
         locationComponent.isLocationComponentEnabled = true
 
-        // Traffic layers + fuel layer + crime heatmap layer
+        // Traffic layers + fuel layer + crime heatmap layer + radar camera layer
         TrafficOverlayLayer.setup(style)
         IncidentPinsLayer.setup(style)
         FuelMapMarkersLayer.setup(style)
         CrimeHeatmapLayer.setup(style)
+        RadarMapMarkersLayer.setup(style)
 
         onStyleReady(style)
     }

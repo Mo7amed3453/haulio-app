@@ -14,6 +14,7 @@ import { startConfirmationAggregator } from './jobs/confirmationAggregator.js';
 import { startEiaCacheJob } from './services/fuel/EiaCacheJob.js';
 import { crimeRoute } from './routes/crime.js';
 import { startCrimeIngester } from './services/crime/CrimeIngester.js';
+import { radarRoute } from './routes/radar.js';
 
 const logger =
   env.NODE_ENV === 'development'
@@ -35,6 +36,7 @@ await server.register(budgetRoute, { prefix: '/v1' });
 await server.register(rerouteRoute, { prefix: '/v1' });
 await server.register(fuelRoute, { prefix: '/v1' });
 await server.register(crimeRoute, { prefix: '/v1' });
+await server.register(radarRoute, { prefix: '/v1' });
 
 // Speed-tile health sub-route
 const speedTileUpdater = new SpeedTileUpdater(server.log);

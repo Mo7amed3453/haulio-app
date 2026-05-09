@@ -9,6 +9,7 @@ import app.haulio.android.features.fuel.FuelViewModel
 import app.haulio.android.features.incident.IncidentReportViewModel
 import app.haulio.android.features.map.MapViewModel
 import app.haulio.android.features.navigation.NavigationViewModel
+import app.haulio.android.features.radar.RadarViewModel
 import app.haulio.android.features.route.RouteCompareViewModel
 import app.haulio.android.features.scanner.BarcodeScannerViewModel
 import app.haulio.android.features.traffic.TrafficViewModel
@@ -31,6 +32,10 @@ import app.haulio.android.services.navigation.INavigationManager
 import app.haulio.android.services.navigation.MockNavigationManager
 import app.haulio.android.services.navigation.VoiceInstructionService
 import app.haulio.android.services.prefs.appDataStore
+import app.haulio.android.services.radar.IRadarProximityEngine
+import app.haulio.android.services.radar.IRadarRepository
+import app.haulio.android.services.radar.MockRadarProximityEngine
+import app.haulio.android.services.radar.MockRadarRepository
 import app.haulio.android.services.traffic.IIncidentRepository
 import app.haulio.android.services.traffic.IRerouteListener
 import app.haulio.android.services.traffic.IRouteClient
@@ -75,6 +80,10 @@ val appModule = module {
     // Crime bridge — swap MockCrimeRepository for KmmCrimeRepositoryBridge in production.
     single<ICrimeRepository> { MockCrimeRepository() }
 
+    // Radar bridge — swap Mock* for Kmm*Bridge when KMM radar layer ships.
+    single<IRadarRepository>       { MockRadarRepository() }
+    single<IRadarProximityEngine>  { MockRadarProximityEngine() }
+
     // ViewModels
     viewModel { MapViewModel(get()) }
     viewModel { NavigationViewModel(get(), get(), get()) }
@@ -86,4 +95,5 @@ val appModule = module {
     viewModel { IncidentReportViewModel(get()) }
     viewModel { FuelViewModel(get()) }
     viewModel { CrimeViewModel(get(), get<DataStore<Preferences>>()) }
+    viewModel { RadarViewModel(get(), get()) }
 }
