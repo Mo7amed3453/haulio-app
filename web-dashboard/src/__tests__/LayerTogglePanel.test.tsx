@@ -2,20 +2,28 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LayerTogglePanel } from '@/components/LayerTogglePanel';
+import type { LayerVisibility } from '@/lib/store';
 
-// Mock Zustand store
+const MOCK_LAYERS: LayerVisibility = {
+  incidents: true,
+  schoolZones: false,
+  industrialZones: true,
+  railCrossings: false,
+  historicalCorridors: true,
+  driverHeatmap: false,
+  timeDimension: false,
+};
+
+const mockToggle = vi.fn();
+
 vi.mock('@/lib/store', () => ({
   useUIStore: vi.fn(() => ({
-    layers: {
-      incidents: true,
-      schoolZones: false,
-      industrialZones: true,
-      railCrossings: false,
-      historicalCorridors: true,
-      driverHeatmap: false,
-      timeDimension: false,
-    },
-    toggleLayer: vi.fn(),
+    layers: MOCK_LAYERS,
+    toggleLayer: mockToggle,
+    sidebarOpen: true,
+    setSidebarOpen: vi.fn(),
+    currentTime: new Date(),
+    setCurrentTime: vi.fn(),
   })),
   LAYER_LABELS: {
     incidents: 'Incidents',
@@ -49,25 +57,6 @@ describe('LayerTogglePanel', () => {
   });
 
   it('calls toggleLayer when a button is clicked', async () => {
-    const { useUIStore } = await import('@/lib/store');
-    const mockToggle = vi.fn();
-    vi.mocked(useUIStore).mockReturnValue({
-      layers: {
-        incidents: true,
-        schoolZones: false,
-        industrialZones: true,
-        railCrossings: false,
-        historicalCorridors: true,
-        driverHeatmap: false,
-        timeDimension: false,
-      },
-      toggleLayer: mockToggle,
-      sidebarOpen: true,
-      setSidebarOpen: vi.fn(),
-      currentTime: new Date(),
-      setCurrentTime: vi.fn(),
-    });
-
     const user = userEvent.setup();
     render(<LayerTogglePanel />);
     await user.click(screen.getByRole('switch', { name: /incidents/i }));
