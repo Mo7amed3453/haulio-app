@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { type ChangeEvent, useEffect, useRef, useState } from 'react';
 
 interface Props {
   currentTime: Date;
@@ -52,7 +52,7 @@ export function TimeDimensionControl({ currentTime, onTimeChange }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing]);
 
-  const handleScrub = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleScrub = (e: ChangeEvent<HTMLInputElement>) => {
     const ratio = parseInt(e.target.value, 10) / 1000;
     const t = new Date(windowStart.getTime() + ratio * totalMs);
     onTimeChange(t);
