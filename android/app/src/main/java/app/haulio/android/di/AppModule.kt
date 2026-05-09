@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import app.haulio.android.features.address.AddressSearchViewModel
 import app.haulio.android.features.delivery.ArrivalViewModel
+import app.haulio.android.features.fuel.FuelViewModel
 import app.haulio.android.features.incident.IncidentReportViewModel
 import app.haulio.android.features.map.MapViewModel
 import app.haulio.android.features.navigation.NavigationViewModel
@@ -16,6 +17,8 @@ import app.haulio.android.services.address.IGeocodingManager
 import app.haulio.android.services.address.MockAddressParser
 import app.haulio.android.services.address.MockDeliveryLogger
 import app.haulio.android.services.address.MockGeocodingManager
+import app.haulio.android.services.fuel.IFuelDataAggregator
+import app.haulio.android.services.fuel.MockFuelDataAggregator
 import app.haulio.android.services.location.LocationRepository
 import app.haulio.android.services.location.LocationRepositoryImpl
 import app.haulio.android.services.location.LocationService
@@ -63,6 +66,9 @@ val appModule = module {
     single<IIncidentRepository> { MockIncidentRepository() }
     single<IRerouteListener>    { MockRerouteListener() }
 
+    // Fuel bridge — swap MockFuelDataAggregator for KmmFuelDataAggregatorBridge in production.
+    single<IFuelDataAggregator> { MockFuelDataAggregator() }
+
     // ViewModels
     viewModel { MapViewModel(get()) }
     viewModel { NavigationViewModel(get(), get(), get()) }
@@ -72,4 +78,5 @@ val appModule = module {
     viewModel { TrafficViewModel(get(), get(), get<DataStore<Preferences>>()) }
     viewModel { RouteCompareViewModel(get(), get<DataStore<Preferences>>()) }
     viewModel { IncidentReportViewModel(get()) }
+    viewModel { FuelViewModel(get()) }
 }

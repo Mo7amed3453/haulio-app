@@ -20,6 +20,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.haulio.android.features.fuel.FuelStationsBottomSheet
+import app.haulio.android.features.fuel.FuelToggleButton
+import app.haulio.android.features.fuel.FuelViewModel
+import app.haulio.android.features.fuel.SubmitPriceDialog
 import app.haulio.android.features.incident.IncidentReportMenu
 import app.haulio.android.features.incident.IncidentReportViewModel
 import app.haulio.android.features.search.SearchBar
@@ -27,6 +31,7 @@ import app.haulio.android.features.traffic.IncidentDetailsBottomSheet
 import app.haulio.android.features.traffic.RerouteBanner
 import app.haulio.android.features.traffic.TrafficToggleButton
 import app.haulio.android.features.traffic.TrafficViewModel
+import app.haulio.android.services.fuel.FuelStation
 import app.haulio.android.services.traffic.TrafficEvent
 import org.koin.androidx.compose.koinViewModel
 
@@ -36,10 +41,12 @@ fun MapScreen(
     viewModel: MapViewModel               = koinViewModel(),
     trafficViewModel: TrafficViewModel    = koinViewModel(),
     incidentViewModel: IncidentReportViewModel = koinViewModel(),
+    fuelViewModel: FuelViewModel          = koinViewModel(),
 ) {
     val uiState         by viewModel.uiState.collectAsStateWithLifecycle()
     val trafficState    by trafficViewModel.uiState.collectAsStateWithLifecycle()
     val incidentState   by incidentViewModel.uiState.collectAsStateWithLifecycle()
+    val fuelState       by fuelViewModel.uiState.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -49,11 +56,25 @@ fun MapScreen(
     // Tapped incident state: for showing details bottom sheet
     var tappedIncident by remember { mutableStateOf<TrafficEvent?>(null) }
 
+    // Tapped fuel station state: for showing submit price dialog
+    var tappedFuelStation by remember { mutableStateOf<FuelStation?>(null) }
+
+    // Station selected from list for price submission
+    var submitPriceStation by remember { mutableStateOf<FuelStation?>(null) }
+
     // Snackbar for incident report success
     LaunchedEffect(incidentState.successMessage) {
         incidentState.successMessage?.let { msg ->
             snackbarHostState.showSnackbar(msg)
             incidentViewModel.clearSuccessMessage()
+        }
+    }
+
+    // Snackbar for fuel submit feedback
+    LaunchedEffect(fuelState.submitSuccess, fuelState.submitError) {
+        (fuelState.submitSuccess ?: fuelState.submitError)?.let { msg ->
+            snackbarHostState.showSnackbar(msg)
+            fuelViewModel.clearSubmitFeedback()
         }
     }
 
@@ -71,9 +92,14 @@ fun MapScreen(
                 userLocation      = uiState.userLocation,
                 trafficEvents     = if (trafficState.isTrafficVisible) trafficState.events else emptyList(),
                 isTrafficVisible  = trafficState.isTrafficVisible,
+                fuelStations      = fuelState.stations,
+                isFuelVisible     = fuelState.isFuelVisible,
                 onMapLongClick    = { lat, lon -> longPressLatLon = Pair(lat, lon) },
                 onIncidentTapped  = { incidentId ->
                     tappedIncident = trafficState.events.firstOrNull { it.id == incidentId }
+                },
+                onFuelStationTapped = { stationId ->
+                    tappedFuelStation = fuelState.stations.firstOrNull { it.id == stationId }
                 },
             )
 
@@ -96,7 +122,16 @@ fun MapScreen(
                 onToggle  = trafficViewModel::toggleTrafficOverlay,
                 modifier  = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(16.dp),
+                    .padding(start = 16.dp, bottom = 80.dp),
+            )
+
+            // Fuel toggle FAB (bottom-start, above traffic FAB)
+            FuelToggleButton(
+                isActive = fuelState.isFuelVisible,
+                onToggle = fuelViewModel::toggleFuelOverlay,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 16.dp, bottom = 16.dp),
             )
 
             // Address search FAB (bottom-end)
@@ -132,6 +167,42 @@ fun MapScreen(
         IncidentDetailsBottomSheet(
             event     = event,
             onDismiss = { tappedIncident = null },
+        )
+    }
+
+    // Fuel stations sheet — opens when fuel overlay is active
+    if (fuelState.isFuelVisible) {
+        FuelStationsBottomSheet(
+            stations        = fuelState.stations,
+            regionalAverage = fuelState.regionalAverage,
+            onSubmitPrice   = { station ->
+                submitPriceStation = station
+            },
+            onDismiss = fuelViewModel::toggleFuelOverlay,
+        )
+    }
+
+    // Fuel station map-tap popup → submit price dialog
+    tappedFuelStation?.let { station ->
+        SubmitPriceDialog(
+            station   = station,
+            onSubmit  = { price, grade ->
+                fuelViewModel.submitPrice(station.id, price, grade)
+                tappedFuelStation = null
+            },
+            onDismiss = { tappedFuelStation = null },
+        )
+    }
+
+    // Submit price dialog opened from the bottom sheet list
+    submitPriceStation?.let { station ->
+        SubmitPriceDialog(
+            station   = station,
+            onSubmit  = { price, grade ->
+                fuelViewModel.submitPrice(station.id, price, grade)
+                submitPriceStation = null
+            },
+            onDismiss = { submitPriceStation = null },
         )
     }
 }

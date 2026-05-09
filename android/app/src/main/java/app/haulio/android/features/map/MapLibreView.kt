@@ -13,8 +13,10 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import app.haulio.android.features.fuel.FuelMapMarkersLayer
 import app.haulio.android.features.traffic.IncidentPinsLayer
 import app.haulio.android.features.traffic.TrafficOverlayLayer
+import app.haulio.android.services.fuel.FuelStation
 import app.haulio.android.services.location.LocationPoint
 import app.haulio.android.services.map.MapStyleProvider
 import app.haulio.android.services.map.TileConfiguration
@@ -30,11 +32,14 @@ import org.maplibre.android.maps.Style
 /**
  * MapLibre map embedded inside a Compose layout.
  *
- * @param userLocation      Current driver location; triggers camera pan when changed.
- * @param trafficEvents     Live traffic events — used to paint the overlay and incident pins.
- * @param isTrafficVisible  Whether the congestion overlay is shown.
- * @param onMapLongClick    Called when the driver long-presses the map (lat, lon).
- * @param onIncidentTapped  Called with the incident ID when a pin is tapped; null = no hit.
+ * @param userLocation         Current driver location; triggers camera pan when changed.
+ * @param trafficEvents        Live traffic events — used to paint the overlay and incident pins.
+ * @param isTrafficVisible     Whether the congestion overlay is shown.
+ * @param fuelStations         Fuel stations to render as map pins.
+ * @param isFuelVisible        Whether the fuel station layer is shown.
+ * @param onMapLongClick       Called when the driver long-presses the map (lat, lon).
+ * @param onIncidentTapped     Called with the incident ID when a pin is tapped.
+ * @param onFuelStationTapped  Called with the station ID when a fuel pin is tapped.
  */
 @SuppressLint("MissingPermission")
 @Composable
@@ -43,8 +48,11 @@ fun MapLibreView(
     userLocation: LocationPoint? = null,
     trafficEvents: List<TrafficEvent> = emptyList(),
     isTrafficVisible: Boolean = true,
+    fuelStations: List<FuelStation> = emptyList(),
+    isFuelVisible: Boolean = false,
     onMapLongClick: ((Double, Double) -> Unit)? = null,
     onIncidentTapped: ((String) -> Unit)? = null,
+    onFuelStationTapped: ((String) -> Unit)? = null,
 ) {
     val context          = LocalContext.current
     val lifecycleOwner   = LocalLifecycleOwner.current
@@ -53,18 +61,24 @@ fun MapLibreView(
 
     // Stable references updated on every recomposition via SideEffect.
     // The map callbacks capture these State objects, so they always call the latest lambdas.
-    val onLongClickRef  = remember { mutableStateOf(onMapLongClick) }
-    val onIncidentRef   = remember { mutableStateOf(onIncidentTapped) }
+    val onLongClickRef      = remember { mutableStateOf(onMapLongClick) }
+    val onIncidentRef       = remember { mutableStateOf(onIncidentTapped) }
+    val onFuelStationRef    = remember { mutableStateOf(onFuelStationTapped) }
 
     // Latest data refs; seeded into the style immediately after it loads.
-    val trafficEventsRef  = remember { mutableStateOf(trafficEvents) }
-    val trafficVisibleRef = remember { mutableStateOf(isTrafficVisible) }
+    val trafficEventsRef    = remember { mutableStateOf(trafficEvents) }
+    val trafficVisibleRef   = remember { mutableStateOf(isTrafficVisible) }
+    val fuelStationsRef     = remember { mutableStateOf(fuelStations) }
+    val fuelVisibleRef      = remember { mutableStateOf(isFuelVisible) }
 
     SideEffect {
-        onLongClickRef.value  = onMapLongClick
-        onIncidentRef.value   = onIncidentTapped
+        onLongClickRef.value    = onMapLongClick
+        onIncidentRef.value     = onIncidentTapped
+        onFuelStationRef.value  = onFuelStationTapped
         trafficEventsRef.value  = trafficEvents
         trafficVisibleRef.value = isTrafficVisible
+        fuelStationsRef.value   = fuelStations
+        fuelVisibleRef.value    = isFuelVisible
     }
 
     // ── Lifecycle wiring ──────────────────────────────────────────────────
@@ -92,16 +106,22 @@ fun MapLibreView(
                 true
             }
 
-            // Tap: show details if an incident pin is hit
+            // Tap: show details if an incident pin or fuel station pin is hit
             map.addOnMapClickListener { latLng ->
                 val projection = map.projection
                 val screenPt   = projection.toScreenLocation(latLng)
                 val incidentId = IncidentPinsLayer.queryAtPoint(map, PointF(screenPt.x, screenPt.y))
-                if (incidentId != null) {
-                    onIncidentRef.value?.invoke(incidentId)
-                    true
-                } else {
-                    false
+                val fuelId     = FuelMapMarkersLayer.queryAtPoint(map, PointF(screenPt.x, screenPt.y))
+                when {
+                    incidentId != null -> {
+                        onIncidentRef.value?.invoke(incidentId)
+                        true
+                    }
+                    fuelId != null -> {
+                        onFuelStationRef.value?.invoke(fuelId)
+                        true
+                    }
+                    else -> false
                 }
             }
 
@@ -109,6 +129,7 @@ fun MapLibreView(
                 // Seed initial data as soon as the style is ready
                 TrafficOverlayLayer.update(style, trafficEventsRef.value, trafficVisibleRef.value)
                 IncidentPinsLayer.update(style, trafficEventsRef.value)
+                FuelMapMarkersLayer.update(style, fuelStationsRef.value, fuelVisibleRef.value)
             }
         }
         onDispose { /* MapView lifecycle handled by the DisposableEffect above */ }
@@ -129,11 +150,12 @@ fun MapLibreView(
                     )
                 }
 
-                // Data: refresh traffic and incident layers when style is ready
+                // Data: refresh traffic, incident, and fuel layers when style is ready
                 val style = map.style ?: return@getMapAsync
                 if (style.getSource(TrafficOverlayLayer.SOURCE_ID) != null) {
                     TrafficOverlayLayer.update(style, trafficEvents, isTrafficVisible)
                     IncidentPinsLayer.update(style, trafficEvents)
+                    FuelMapMarkersLayer.update(style, fuelStations, isFuelVisible)
                 }
             }
         },
@@ -166,9 +188,10 @@ private fun configureMap(
         )
         locationComponent.isLocationComponentEnabled = true
 
-        // Traffic layers
+        // Traffic layers + fuel layer
         TrafficOverlayLayer.setup(style)
         IncidentPinsLayer.setup(style)
+        FuelMapMarkersLayer.setup(style)
 
         onStyleReady(style)
     }
