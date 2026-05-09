@@ -12,6 +12,8 @@ import { SpeedTileUpdater } from './services/speed-tiles/SpeedTileUpdater.js';
 import { startExpireJob } from './jobs/expireIncidents.js';
 import { startConfirmationAggregator } from './jobs/confirmationAggregator.js';
 import { startEiaCacheJob } from './services/fuel/EiaCacheJob.js';
+import { crimeRoute } from './routes/crime.js';
+import { startCrimeIngester } from './services/crime/CrimeIngester.js';
 
 const logger =
   env.NODE_ENV === 'development'
@@ -32,6 +34,7 @@ await server.register(zonesRoute, { prefix: '/v1' });
 await server.register(budgetRoute, { prefix: '/v1' });
 await server.register(rerouteRoute, { prefix: '/v1' });
 await server.register(fuelRoute, { prefix: '/v1' });
+await server.register(crimeRoute, { prefix: '/v1' });
 
 // Speed-tile health sub-route
 const speedTileUpdater = new SpeedTileUpdater(server.log);
@@ -43,6 +46,7 @@ speedTileUpdater.startCron();
 startExpireJob(server.log);
 startConfirmationAggregator(server.log);
 startEiaCacheJob(server.log);
+startCrimeIngester(server.log);
 
 const start = async (): Promise<void> => {
   try {

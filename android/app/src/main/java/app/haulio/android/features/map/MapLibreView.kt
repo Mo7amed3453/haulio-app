@@ -13,6 +13,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import app.haulio.android.features.crime.CrimeHeatmapLayer
 import app.haulio.android.features.fuel.FuelMapMarkersLayer
 import app.haulio.android.features.traffic.IncidentPinsLayer
 import app.haulio.android.features.traffic.TrafficOverlayLayer
@@ -21,6 +22,7 @@ import app.haulio.android.services.location.LocationPoint
 import app.haulio.android.services.map.MapStyleProvider
 import app.haulio.android.services.map.TileConfiguration
 import app.haulio.android.services.traffic.TrafficEvent
+import app.haulio.shared.crime.models.CrimeGridCell
 import org.koin.java.KoinJavaComponent.getKoin
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
@@ -37,6 +39,8 @@ import org.maplibre.android.maps.Style
  * @param isTrafficVisible     Whether the congestion overlay is shown.
  * @param fuelStations         Fuel stations to render as map pins.
  * @param isFuelVisible        Whether the fuel station layer is shown.
+ * @param crimeGrid            Crime heatmap grid cells to render.
+ * @param isCrimeVisible       Whether the crime heatmap layer is shown.
  * @param onMapLongClick       Called when the driver long-presses the map (lat, lon).
  * @param onIncidentTapped     Called with the incident ID when a pin is tapped.
  * @param onFuelStationTapped  Called with the station ID when a fuel pin is tapped.
@@ -50,6 +54,8 @@ fun MapLibreView(
     isTrafficVisible: Boolean = true,
     fuelStations: List<FuelStation> = emptyList(),
     isFuelVisible: Boolean = false,
+    crimeGrid: List<CrimeGridCell> = emptyList(),
+    isCrimeVisible: Boolean = false,
     onMapLongClick: ((Double, Double) -> Unit)? = null,
     onIncidentTapped: ((String) -> Unit)? = null,
     onFuelStationTapped: ((String) -> Unit)? = null,
@@ -70,6 +76,8 @@ fun MapLibreView(
     val trafficVisibleRef   = remember { mutableStateOf(isTrafficVisible) }
     val fuelStationsRef     = remember { mutableStateOf(fuelStations) }
     val fuelVisibleRef      = remember { mutableStateOf(isFuelVisible) }
+    val crimeGridRef        = remember { mutableStateOf(crimeGrid) }
+    val crimeVisibleRef     = remember { mutableStateOf(isCrimeVisible) }
 
     SideEffect {
         onLongClickRef.value    = onMapLongClick
@@ -79,6 +87,8 @@ fun MapLibreView(
         trafficVisibleRef.value = isTrafficVisible
         fuelStationsRef.value   = fuelStations
         fuelVisibleRef.value    = isFuelVisible
+        crimeGridRef.value      = crimeGrid
+        crimeVisibleRef.value   = isCrimeVisible
     }
 
     // ── Lifecycle wiring ──────────────────────────────────────────────────
@@ -130,6 +140,7 @@ fun MapLibreView(
                 TrafficOverlayLayer.update(style, trafficEventsRef.value, trafficVisibleRef.value)
                 IncidentPinsLayer.update(style, trafficEventsRef.value)
                 FuelMapMarkersLayer.update(style, fuelStationsRef.value, fuelVisibleRef.value)
+                CrimeHeatmapLayer.update(style, crimeGridRef.value, crimeVisibleRef.value)
             }
         }
         onDispose { /* MapView lifecycle handled by the DisposableEffect above */ }
@@ -150,12 +161,13 @@ fun MapLibreView(
                     )
                 }
 
-                // Data: refresh traffic, incident, and fuel layers when style is ready
+                // Data: refresh traffic, incident, fuel, and crime layers when style is ready
                 val style = map.style ?: return@getMapAsync
                 if (style.getSource(TrafficOverlayLayer.SOURCE_ID) != null) {
                     TrafficOverlayLayer.update(style, trafficEvents, isTrafficVisible)
                     IncidentPinsLayer.update(style, trafficEvents)
                     FuelMapMarkersLayer.update(style, fuelStations, isFuelVisible)
+                    CrimeHeatmapLayer.update(style, crimeGrid, isCrimeVisible)
                 }
             }
         },
@@ -188,10 +200,11 @@ private fun configureMap(
         )
         locationComponent.isLocationComponentEnabled = true
 
-        // Traffic layers + fuel layer
+        // Traffic layers + fuel layer + crime heatmap layer
         TrafficOverlayLayer.setup(style)
         IncidentPinsLayer.setup(style)
         FuelMapMarkersLayer.setup(style)
+        CrimeHeatmapLayer.setup(style)
 
         onStyleReady(style)
     }

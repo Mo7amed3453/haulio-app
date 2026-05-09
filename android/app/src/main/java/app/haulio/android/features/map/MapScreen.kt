@@ -20,6 +20,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.haulio.android.features.crime.CrimeAlertBanner
+import app.haulio.android.features.crime.CrimeToggleButton
+import app.haulio.android.features.crime.CrimeViewModel
 import app.haulio.android.features.fuel.FuelStationsBottomSheet
 import app.haulio.android.features.fuel.FuelToggleButton
 import app.haulio.android.features.fuel.FuelViewModel
@@ -42,11 +45,13 @@ fun MapScreen(
     trafficViewModel: TrafficViewModel    = koinViewModel(),
     incidentViewModel: IncidentReportViewModel = koinViewModel(),
     fuelViewModel: FuelViewModel          = koinViewModel(),
+    crimeViewModel: CrimeViewModel        = koinViewModel(),
 ) {
     val uiState         by viewModel.uiState.collectAsStateWithLifecycle()
     val trafficState    by trafficViewModel.uiState.collectAsStateWithLifecycle()
     val incidentState   by incidentViewModel.uiState.collectAsStateWithLifecycle()
     val fuelState       by fuelViewModel.uiState.collectAsStateWithLifecycle()
+    val crimeState      by crimeViewModel.uiState.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -94,6 +99,8 @@ fun MapScreen(
                 isTrafficVisible  = trafficState.isTrafficVisible,
                 fuelStations      = fuelState.stations,
                 isFuelVisible     = fuelState.isFuelVisible,
+                crimeGrid         = crimeState.cells,
+                isCrimeVisible    = crimeState.isCrimeVisible,
                 onMapLongClick    = { lat, lon -> longPressLatLon = Pair(lat, lon) },
                 onIncidentTapped  = { incidentId ->
                     tappedIncident = trafficState.events.firstOrNull { it.id == incidentId }
@@ -101,6 +108,12 @@ fun MapScreen(
                 onFuelStationTapped = { stationId ->
                     tappedFuelStation = fuelState.stations.firstOrNull { it.id == stationId }
                 },
+            )
+
+            // Crime alert banner slides in from the top (above reroute banner)
+            CrimeAlertBanner(
+                modifier  = Modifier.align(Alignment.TopCenter),
+                viewModel = crimeViewModel,
             )
 
             // Reroute banner slides in from the top
@@ -116,20 +129,29 @@ fun MapScreen(
                 onFuelTap       = viewModel::onFuelTap,
             )
 
-            // Traffic toggle FAB (bottom-start)
+            // Traffic toggle FAB (bottom-start, third row)
             TrafficToggleButton(
                 isVisible = trafficState.isTrafficVisible,
                 onToggle  = trafficViewModel::toggleTrafficOverlay,
                 modifier  = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(start = 16.dp, bottom = 80.dp),
+                    .padding(start = 16.dp, bottom = 144.dp),
             )
 
-            // Fuel toggle FAB (bottom-start, above traffic FAB)
+            // Fuel toggle FAB (bottom-start, second row)
             FuelToggleButton(
                 isActive = fuelState.isFuelVisible,
                 onToggle = fuelViewModel::toggleFuelOverlay,
                 modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 16.dp, bottom = 80.dp),
+            )
+
+            // Crime toggle FAB (bottom-start, first row)
+            CrimeToggleButton(
+                isVisible = crimeState.isCrimeVisible,
+                onToggle  = crimeViewModel::toggleCrimeOverlay,
+                modifier  = Modifier
                     .align(Alignment.BottomStart)
                     .padding(start = 16.dp, bottom = 16.dp),
             )
