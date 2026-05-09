@@ -98,6 +98,9 @@ dependencies {
     // Coil (async image loading — proof-of-delivery photo display)
     implementation("io.coil-kt:coil-compose:2.7.0")
 
+    // DataStore Preferences (traffic overlay toggle, route compare settings)
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+
     // Supabase Kotlin (postgrest + gotrue)
     val supabaseVersion = "2.6.0"
     implementation(platform("io.github.jan-tennert.supabase:bom:$supabaseVersion"))

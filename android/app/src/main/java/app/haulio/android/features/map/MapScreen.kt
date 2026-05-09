@@ -7,42 +7,131 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.haulio.android.features.incident.IncidentReportMenu
+import app.haulio.android.features.incident.IncidentReportViewModel
 import app.haulio.android.features.search.SearchBar
+import app.haulio.android.features.traffic.IncidentDetailsBottomSheet
+import app.haulio.android.features.traffic.RerouteBanner
+import app.haulio.android.features.traffic.TrafficToggleButton
+import app.haulio.android.features.traffic.TrafficViewModel
+import app.haulio.android.services.traffic.TrafficEvent
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun MapScreen(
     onNavigateToAddressSearch: () -> Unit = {},
-    viewModel: MapViewModel = koinViewModel(),
+    viewModel: MapViewModel               = koinViewModel(),
+    trafficViewModel: TrafficViewModel    = koinViewModel(),
+    incidentViewModel: IncidentReportViewModel = koinViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState         by viewModel.uiState.collectAsStateWithLifecycle()
+    val trafficState    by trafficViewModel.uiState.collectAsStateWithLifecycle()
+    val incidentState   by incidentViewModel.uiState.collectAsStateWithLifecycle()
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        MapLibreView(
-            modifier = Modifier.fillMaxSize(),
-            userLocation = uiState.userLocation,
-        )
-        SearchBar(
-            modifier = Modifier.padding(16.dp),
-            onSearchChanged = viewModel::onSearchChanged,
-            onFuelTap = viewModel::onFuelTap,
-        )
-        FloatingActionButton(
-            onClick = onNavigateToAddressSearch,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = "Search Address",
-            )
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Long-press state: coordinates for incident reporting
+    var longPressLatLon by remember { mutableStateOf<Pair<Double, Double>?>(null) }
+
+    // Tapped incident state: for showing details bottom sheet
+    var tappedIncident by remember { mutableStateOf<TrafficEvent?>(null) }
+
+    // Snackbar for incident report success
+    LaunchedEffect(incidentState.successMessage) {
+        incidentState.successMessage?.let { msg ->
+            snackbarHostState.showSnackbar(msg)
+            incidentViewModel.clearSuccessMessage()
         }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+        ) {
+            // Base map
+            MapLibreView(
+                modifier          = Modifier.fillMaxSize(),
+                userLocation      = uiState.userLocation,
+                trafficEvents     = if (trafficState.isTrafficVisible) trafficState.events else emptyList(),
+                isTrafficVisible  = trafficState.isTrafficVisible,
+                onMapLongClick    = { lat, lon -> longPressLatLon = Pair(lat, lon) },
+                onIncidentTapped  = { incidentId ->
+                    tappedIncident = trafficState.events.firstOrNull { it.id == incidentId }
+                },
+            )
+
+            // Reroute banner slides in from the top
+            RerouteBanner(
+                modifier = Modifier.align(Alignment.TopCenter),
+                viewModel = trafficViewModel,
+            )
+
+            // Address search bar
+            SearchBar(
+                modifier        = Modifier.padding(16.dp),
+                onSearchChanged = viewModel::onSearchChanged,
+                onFuelTap       = viewModel::onFuelTap,
+            )
+
+            // Traffic toggle FAB (bottom-start)
+            TrafficToggleButton(
+                isVisible = trafficState.isTrafficVisible,
+                onToggle  = trafficViewModel::toggleTrafficOverlay,
+                modifier  = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp),
+            )
+
+            // Address search FAB (bottom-end)
+            FloatingActionButton(
+                onClick  = onNavigateToAddressSearch,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
+            ) {
+                Icon(
+                    imageVector        = Icons.Default.Search,
+                    contentDescription = "Search Address",
+                )
+            }
+        }
+    }
+
+    // Incident report sheet — appears after a map long-press
+    longPressLatLon?.let { (lat, lon) ->
+        IncidentReportMenu(
+            lat      = lat,
+            lon      = lon,
+            onReport = { type ->
+                incidentViewModel.reportIncident(type, lat, lon)
+                longPressLatLon = null
+            },
+            onDismiss = { longPressLatLon = null },
+        )
+    }
+
+    // Incident details sheet — appears after tapping a map pin
+    tappedIncident?.let { event ->
+        IncidentDetailsBottomSheet(
+            event     = event,
+            onDismiss = { tappedIncident = null },
+        )
     }
 }

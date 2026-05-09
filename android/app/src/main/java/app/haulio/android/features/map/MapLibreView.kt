@@ -1,9 +1,11 @@
 package app.haulio.android.features.map
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.layout.fillMaxSize
+import android.graphics.PointF
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -11,87 +13,163 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import app.haulio.android.features.traffic.IncidentPinsLayer
+import app.haulio.android.features.traffic.TrafficOverlayLayer
 import app.haulio.android.services.location.LocationPoint
 import app.haulio.android.services.map.MapStyleProvider
 import app.haulio.android.services.map.TileConfiguration
+import app.haulio.android.services.traffic.TrafficEvent
 import org.koin.java.KoinJavaComponent.getKoin
+import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.location.LocationComponentActivationOptions
-import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 
+/**
+ * MapLibre map embedded inside a Compose layout.
+ *
+ * @param userLocation      Current driver location; triggers camera pan when changed.
+ * @param trafficEvents     Live traffic events — used to paint the overlay and incident pins.
+ * @param isTrafficVisible  Whether the congestion overlay is shown.
+ * @param onMapLongClick    Called when the driver long-presses the map (lat, lon).
+ * @param onIncidentTapped  Called with the incident ID when a pin is tapped; null = no hit.
+ */
 @SuppressLint("MissingPermission")
 @Composable
 fun MapLibreView(
     modifier: Modifier = Modifier,
-    userLocation: LocationPoint?
+    userLocation: LocationPoint? = null,
+    trafficEvents: List<TrafficEvent> = emptyList(),
+    isTrafficVisible: Boolean = true,
+    onMapLongClick: ((Double, Double) -> Unit)? = null,
+    onIncidentTapped: ((String) -> Unit)? = null,
 ) {
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
+    val context          = LocalContext.current
+    val lifecycleOwner   = LocalLifecycleOwner.current
     val mapStyleProvider = remember { getKoin().get<MapStyleProvider>() }
-    val mapView = remember {
-        MapView(context).apply {
-            onCreate(null)
-        }
+    val mapView          = remember { MapView(context).apply { onCreate(null) } }
+
+    // Stable references updated on every recomposition via SideEffect.
+    // The map callbacks capture these State objects, so they always call the latest lambdas.
+    val onLongClickRef  = remember { mutableStateOf(onMapLongClick) }
+    val onIncidentRef   = remember { mutableStateOf(onIncidentTapped) }
+
+    // Latest data refs; seeded into the style immediately after it loads.
+    val trafficEventsRef  = remember { mutableStateOf(trafficEvents) }
+    val trafficVisibleRef = remember { mutableStateOf(isTrafficVisible) }
+
+    SideEffect {
+        onLongClickRef.value  = onMapLongClick
+        onIncidentRef.value   = onIncidentTapped
+        trafficEventsRef.value  = trafficEvents
+        trafficVisibleRef.value = isTrafficVisible
     }
 
+    // ── Lifecycle wiring ──────────────────────────────────────────────────
     DisposableEffect(lifecycleOwner, mapView) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_START -> mapView.onStart()
-                Lifecycle.Event.ON_RESUME -> mapView.onResume()
-                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
-                Lifecycle.Event.ON_STOP -> mapView.onStop()
+                Lifecycle.Event.ON_START   -> mapView.onStart()
+                Lifecycle.Event.ON_RESUME  -> mapView.onResume()
+                Lifecycle.Event.ON_PAUSE   -> mapView.onPause()
+                Lifecycle.Event.ON_STOP    -> mapView.onStop()
                 Lifecycle.Event.ON_DESTROY -> mapView.onDestroy()
-                else -> Unit
+                else                       -> Unit
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
+    // ── One-time map setup (listeners + style) ────────────────────────────
+    DisposableEffect(mapView) {
+        mapView.getMapAsync { map ->
+            // Long-press: driver reports an incident
+            map.addOnMapLongClickListener { latLng ->
+                onLongClickRef.value?.invoke(latLng.latitude, latLng.longitude)
+                true
+            }
+
+            // Tap: show details if an incident pin is hit
+            map.addOnMapClickListener { latLng ->
+                val projection = map.projection
+                val screenPt   = projection.toScreenLocation(latLng)
+                val incidentId = IncidentPinsLayer.queryAtPoint(map, PointF(screenPt.x, screenPt.y))
+                if (incidentId != null) {
+                    onIncidentRef.value?.invoke(incidentId)
+                    true
+                } else {
+                    false
+                }
+            }
+
+            configureMap(map, mapStyleProvider) { style ->
+                // Seed initial data as soon as the style is ready
+                TrafficOverlayLayer.update(style, trafficEventsRef.value, trafficVisibleRef.value)
+                IncidentPinsLayer.update(style, trafficEventsRef.value)
+            }
+        }
+        onDispose { /* MapView lifecycle handled by the DisposableEffect above */ }
+    }
+
+    // ── Map view ─────────────────────────────────────────────────────────
     AndroidView(
-        modifier = modifier.fillMaxSize(),
-        factory = { mapView },
-        update = { view ->
+        modifier = modifier,
+        factory  = { mapView },
+        update   = { view ->
             view.getMapAsync { map ->
-                configureMap(map, mapStyleProvider)
-                if (userLocation != null) {
+                // Camera: follow driver
+                userLocation?.let { loc ->
                     map.animateCamera(
-                        org.maplibre.android.camera.CameraUpdateFactory.newLatLngZoom(
-                            org.maplibre.android.geometry.LatLng(userLocation.latitude, userLocation.longitude),
-                            13.0
+                        CameraUpdateFactory.newLatLngZoom(
+                            LatLng(loc.latitude, loc.longitude), 13.0
                         )
                     )
                 }
+
+                // Data: refresh traffic and incident layers when style is ready
+                val style = map.style ?: return@getMapAsync
+                if (style.getSource(TrafficOverlayLayer.SOURCE_ID) != null) {
+                    TrafficOverlayLayer.update(style, trafficEvents, isTrafficVisible)
+                    IncidentPinsLayer.update(style, trafficEvents)
+                }
             }
-        }
+        },
     )
 }
 
+// ── Private helpers ────────────────────────────────────────────────────────
+
+@SuppressLint("MissingPermission")
 private fun configureMap(
     map: MapLibreMap,
-    mapStyleProvider: MapStyleProvider
+    mapStyleProvider: MapStyleProvider,
+    onStyleReady: (Style) -> Unit = {},
 ) {
     map.setStyle(Style.Builder().fromJson(mapStyleProvider.loadDarkStyleJson())) { style ->
+        // Default camera position
         map.moveCamera(
-            org.maplibre.android.camera.CameraUpdateFactory.newLatLngZoom(
-                org.maplibre.android.geometry.LatLng(
-                    TileConfiguration.DEFAULT_CENTER_LATITUDE,
-                    TileConfiguration.DEFAULT_CENTER_LONGITUDE
-                ),
-                TileConfiguration.DEFAULT_ZOOM
+            CameraUpdateFactory.newLatLngZoom(
+                LatLng(TileConfiguration.DEFAULT_CENTER_LATITUDE, TileConfiguration.DEFAULT_CENTER_LONGITUDE),
+                TileConfiguration.DEFAULT_ZOOM,
             )
         )
+
+        // Blue driver-dot
         val locationComponent = map.locationComponent
         locationComponent.activateLocationComponent(
-            LocationComponentActivationOptions.builder(
-                mapStyleProvider.context,
-                style
-            ).build()
+            LocationComponentActivationOptions
+                .builder(mapStyleProvider.context, style)
+                .build()
         )
         locationComponent.isLocationComponentEnabled = true
+
+        // Traffic layers
+        TrafficOverlayLayer.setup(style)
+        IncidentPinsLayer.setup(style)
+
+        onStyleReady(style)
     }
 }
