@@ -24,6 +24,8 @@ export function TimeDimensionControl({ currentTime, onTimeChange }: Props) {
 
   const [playing, setPlaying] = useState(false);
   const rafRef = useRef<number | null>(null);
+  const currentTimeRef = useRef(currentTime);
+  currentTimeRef.current = currentTime;
 
   useEffect(() => {
     if (!playing) {
@@ -38,10 +40,10 @@ export function TimeDimensionControl({ currentTime, onTimeChange }: Props) {
       lastTick = timestamp;
       // Advance simulation: 1 real second = 10 sim minutes
       const simAdvance = delta * 10 * 60 * 1000;
-      onTimeChange((prev) => {
-        const next = new Date(prev.getTime() + simAdvance);
-        return next > windowEnd ? windowStart : next;
-      });
+      const prev = currentTimeRef.current;
+      const candidate = new Date(prev.getTime() + simAdvance);
+      const next = candidate > windowEnd ? windowStart : candidate;
+      onTimeChange(next);
       rafRef.current = requestAnimationFrame(tick);
     };
 

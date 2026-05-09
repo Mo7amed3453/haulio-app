@@ -63,7 +63,7 @@ describe('IncidentFeed', () => {
       data: [],
       isLoading: true,
       isError: false,
-    } as ReturnType<typeof useTrafficEvents>);
+    } as unknown as ReturnType<typeof useTrafficEvents>);
 
     render(<IncidentFeed />, { wrapper });
     expect(screen.getByText(/loading incidents/i)).toBeInTheDocument();
@@ -75,7 +75,7 @@ describe('IncidentFeed', () => {
       data: [],
       isLoading: false,
       isError: true,
-    } as ReturnType<typeof useTrafficEvents>);
+    } as unknown as ReturnType<typeof useTrafficEvents>);
 
     render(<IncidentFeed />, { wrapper });
     expect(screen.getByText(/failed to load/i)).toBeInTheDocument();
@@ -87,7 +87,7 @@ describe('IncidentFeed', () => {
       data: [],
       isLoading: false,
       isError: false,
-    } as ReturnType<typeof useTrafficEvents>);
+    } as unknown as ReturnType<typeof useTrafficEvents>);
 
     render(<IncidentFeed />, { wrapper });
     expect(screen.getByText(/no active incidents/i)).toBeInTheDocument();
