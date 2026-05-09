@@ -1,0 +1,27 @@
+CREATE TABLE tomtom_budget (
+    -- Epoch-ms of the UTC day start (acts as a composite natural key).
+    day_start_ms  INTEGER NOT NULL PRIMARY KEY,
+    call_count    INTEGER NOT NULL DEFAULT 0
+);
+
+-- Returns the budget row for a specific UTC day.
+selectForDay:
+SELECT * FROM tomtom_budget
+WHERE day_start_ms = ?;
+
+-- Inserts a new day row, or increments the counter if the day already exists.
+incrementForDay:
+INSERT INTO tomtom_budget (day_start_ms, call_count)
+VALUES (?, 1)
+ON CONFLICT(day_start_ms) DO UPDATE SET call_count = call_count + 1;
+
+-- Resets the counter for a specific day (used after midnight rollover).
+resetDay:
+UPDATE tomtom_budget
+SET call_count = 0
+WHERE day_start_ms = ?;
+
+-- Removes rows older than a given threshold to prevent unbounded growth.
+deleteOldDays:
+DELETE FROM tomtom_budget
+WHERE day_start_ms < ?;

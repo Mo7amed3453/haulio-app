@@ -1,0 +1,44 @@
+CREATE TABLE traffic_events (
+    source_id    TEXT    NOT NULL PRIMARY KEY,
+    type         TEXT    NOT NULL,
+    severity     TEXT    NOT NULL,
+    lat          REAL    NOT NULL,
+    lng          REAL    NOT NULL,
+    heading_deg  REAL,
+    start_ts     INTEGER NOT NULL,
+    expires_ts   INTEGER NOT NULL,
+    source       TEXT    NOT NULL,
+    cached_at    INTEGER NOT NULL
+);
+
+-- Returns all non-expired events whose cache entry is still fresh.
+selectActive:
+SELECT * FROM traffic_events
+WHERE cached_at > :minCachedAt
+  AND expires_ts > :now;
+
+-- Returns non-expired events within a geographic bounding box.
+selectByBbox:
+SELECT * FROM traffic_events
+WHERE lat  BETWEEN :minLat AND :maxLat
+  AND lng  BETWEEN :minLng AND :maxLng
+  AND cached_at > :minCachedAt
+  AND expires_ts > :now;
+
+-- Upserts a single event row.
+insertOrReplace:
+INSERT OR REPLACE INTO traffic_events
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- Removes all rows whose cache timestamp is older than the given cutoff.
+deleteExpired:
+DELETE FROM traffic_events
+WHERE cached_at < :cutoff;
+
+-- Truncates the entire table.
+deleteAll:
+DELETE FROM traffic_events;
+
+-- Diagnostic count.
+countAll:
+SELECT COUNT(*) FROM traffic_events;

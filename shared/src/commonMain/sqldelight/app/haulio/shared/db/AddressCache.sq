@@ -1,0 +1,27 @@
+CREATE TABLE address_cache (
+    normalized_key TEXT NOT NULL PRIMARY KEY,
+    response_json TEXT NOT NULL,
+    cached_at INTEGER NOT NULL
+);
+
+selectByKey:
+SELECT * FROM address_cache
+WHERE normalized_key = ? AND cached_at > ?;
+
+insertOrReplace:
+INSERT OR REPLACE INTO address_cache
+VALUES (?, ?, ?);
+
+deleteByKey:
+DELETE FROM address_cache
+WHERE normalized_key = ?;
+
+deleteExpired:
+DELETE FROM address_cache
+WHERE cached_at < ?;
+
+deleteAll:
+DELETE FROM address_cache;
+
+countAll:
+SELECT COUNT(*) FROM address_cache;
